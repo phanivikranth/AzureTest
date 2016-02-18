@@ -146,7 +146,7 @@ namespace AzureTest
                 foreach (VendorProduct entity in searchResults)
                 {
 
-                    CloudStorageAccount storageAccount = CreateStorageAccountFromConnectionString("DefaultEndpointsProtocol=http;AccountName=boutydata;AccountKey=tugVuwvqtJbgaBKChCp1asGvE2ruBiiqAaTDwlTt9P8FxXvz0+y0mmHwX/wnacIovSnyxBpyJrG8ufHE8Cln9g==");
+                    CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings["storageConnectionString"].ConnectionString);
                     CloudTableClient tableClient = new CloudTableClient(storageAccount.TableStorageUri, storageAccount.Credentials);
                     CloudTable table = tableClient.GetTableReference(TableName);
 
