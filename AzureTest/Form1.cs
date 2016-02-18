@@ -14,6 +14,7 @@ using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Configuration;
 
 namespace AzureTest
 {
@@ -21,9 +22,23 @@ namespace AzureTest
     {
         internal const string TableName = "VendorData";
         internal const string QueueName = "productupdates";
+        ListView listView2 = new ListView();
+        
         public Form1()
         {
             InitializeComponent();
+            CreateMyListView();
+
+            System.Windows.Forms.Timer timer1 = new System.Windows.Forms.Timer();
+            timer1.Interval = 5000;
+            timer1.Tick += new System.EventHandler(timer1_Tick);
+            timer1.Start();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            //listView1.Items.Clear();
+            listView2.Items.Clear();
             CreateMyListView();
         }
 
@@ -49,11 +64,11 @@ namespace AzureTest
             return storageAccount;
         }
        
-        private static void AdvancedTableOperationsAsync(CloudTable table,ListView list)
+        private static void AdvancedTableOperations(CloudTable table,ListView list)
         {           
-            PartitionRangeQueryAsync(table, list);            
+            PartitionRangeQuery(table, list);            
         }
-        private static void PartitionRangeQueryAsync(CloudTable table, ListView list)
+        private static void PartitionRangeQuery(CloudTable table, ListView list)
         {
             TableQuery<VendorEntity> rangeQuery1 = new TableQuery<VendorEntity>().Take(50);
             int i = 0;
@@ -87,31 +102,26 @@ namespace AzureTest
             }
             while (token != null);
         }
-        private static CloudTable CreateTableAsync()
+        private static CloudTable CreateTable()
         {
             
-            CloudStorageAccount storageAccount = CreateStorageAccountFromConnectionString("DefaultEndpointsProtocol=http;AccountName=boutydata;AccountKey=tugVuwvqtJbgaBKChCp1asGvE2ruBiiqAaTDwlTt9P8FxXvz0+y0mmHwX/wnacIovSnyxBpyJrG8ufHE8Cln9g==");            
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings["storageConnectionString"].ConnectionString);            
             CloudTableClient tableClient = new CloudTableClient(storageAccount.TableStorageUri, storageAccount.Credentials);
             CloudTable table = tableClient.GetTableReference(TableName);
             return table;
         }
 
-        private static CloudQueue CreateQueueAsync()
+        private static CloudQueue CreateQueue()
         {
             
-            CloudStorageAccount storageAccount = CreateStorageAccountFromConnectionString("DefaultEndpointsProtocol=http;AccountName=boutydata;AccountKey=tugVuwvqtJbgaBKChCp1asGvE2ruBiiqAaTDwlTt9P8FxXvz0+y0mmHwX/wnacIovSnyxBpyJrG8ufHE8Cln9g==");            
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings["storageConnectionString"].ConnectionString);
             CloudQueueClient queueClient = new CloudQueueClient(storageAccount.QueueStorageUri, storageAccount.Credentials);            
             CloudQueue Queue = queueClient.GetQueueReference(QueueName);                        
             return Queue;
         }
 
-        private static void BasicQueueOperationsAsync(CloudQueue queue,ListView list)
-        {                        
-            //CloudQueueMessage peekedMessage = queue.PeekMessage();
-
-            //queue.FetchAttributes();
-            //int? cachedMessageCount = queue.ApproximateMessageCount;
-
+        private static void BasicQueueOperations(CloudQueue queue,ListView list)
+        {                                    
             CloudQueueMessage message = queue.GetMessage();
             if (message != null)
             {                
@@ -119,11 +129,7 @@ namespace AzureTest
             }
 
             if (message != null)
-            {
-                
-                //t1.Text = message.AsString;
-                //t1.Text += message.PopReceipt + message.InsertionTime + message.ExpirationTime;                
-
+            {                               
                 string json = message.AsString;
 
                 JObject googleSearch = JObject.Parse(json);
@@ -175,28 +181,20 @@ namespace AzureTest
                             }
                         }
                         catch (Exception e)
-                        {
-                            //e.InnerException.ToString();
+                        {                            
                         }
                     }
                     while (token != null);                    
                 }
-            }
-
-                     
-
-            //CloudQueueMessage message = await queue.GetMessageAsync();
-            //if (message != null)
-            //{
-            //    Console.WriteLine("Processing & deleting message with content: {0}", message.AsString);
-            //    await queue.DeleteMessageAsync(message);
-            //}
+            }                               
         }
 
         private void CreateMyListView()
         {
             
             ListView listView1 = new ListView();
+
+            //listView1.Items.Clear();           
             listView1.Bounds = new Rectangle(new Point(10, 10), new Size(600, 600));                        
             listView1.View = View.Details;            
             
@@ -213,7 +211,8 @@ namespace AzureTest
             listView1.Columns.Add("Code", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Description", -2, HorizontalAlignment.Left);
 
-            ListView listView2 = new ListView();
+            //ListView listView2 = new ListView();
+            listView1.Items.Clear();
             listView2.Bounds = new Rectangle(new Point(610, 10), new Size(600, 600));
             listView2.View = View.Details;
 
@@ -231,29 +230,17 @@ namespace AzureTest
             listView2.Columns.Add("ProductDescription", -2, HorizontalAlignment.Left);
             listView2.Columns.Add("Price", -2, HorizontalAlignment.Left);
 
-            CloudTable table = CreateTableAsync();
-            AdvancedTableOperationsAsync(table,listView1);
+            CloudTable table = CreateTable();
+            AdvancedTableOperations(table,listView1);
             this.Controls.Add(listView1);
 
             //TextBox t1 = new TextBox();
             //t1.Bounds = new Rectangle(new Point(10, 610), new Size(500, 500));
-            CloudQueue queue = CreateQueueAsync();
-            BasicQueueOperationsAsync(queue,listView2);
+            CloudQueue queue = CreateQueue();
+            BasicQueueOperations(queue,listView2);
 
-            //this.Controls.Add(t1);
-            this.Controls.Add(listView2);
-
-            //Button b1 = new Button();
-            //b1.Bounds = new Rectangle(new Point(1210, 10), new Size(20, 20));
-            //b1.Text = "Refresh Screen";
-            //b1.Click += B1_Click;            
-            ////this.Controls.Remove(listView2);
-            //this.Controls.Add(b1);           
-        }
-
-        //private void B1_Click(object sender, EventArgs e)
-        //{
-        //    CreateMyListView();
-        //}
+            //this.Controls.Add(t1);            
+            this.Controls.Add(listView2);                                               
+        }        
     }
 }
